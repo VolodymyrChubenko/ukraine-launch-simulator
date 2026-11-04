@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Симулятор запусків
 
-## Getting Started
+Інтерактивний симулятор запусків ракет на мапі України. Оберіть точку старту на підконтрольній території, тип ракети («Нептун», «Фламінго», «Сапсан» чи «Пекло») і ціль у межах її дальності. Ракета летить найкоротшим шляхом по поверхні Землі з реальною швидкістю, яку можна прискорити до ×120. Після прильоту показується результат: «Ціль уражено» або «Ракету збито».
 
-First, run the development server:
+На мапі є області України, сусідні країни та лінія фронту за даними DeepStateMap. Правила спрощені, характеристики ракет орієнтовні: проєкт демонстраційний.
+
+## Технології
+
+- **Next.js 16** (App Router, Turbopack, `cacheComponents`), **React 19**, **TypeScript**
+- **d3-geo**: проєкція Меркатора, дуги великого кола, кола дальності, `geoContains` на сервері. SVG-контури будуються на сервері, тому GeoJSON не потрапляє в клієнтський бандл.
+- **Route Handlers** як API: сервер є джерелом правди, він перевіряє дальність і район старту, рахує політ і результат.
+- **Server-Sent Events**: сервер раз на секунду шле знімок стану, клієнт між знімками екстраполює позицію в `requestAnimationFrame`.
+- **Tailwind CSS 4**, **mapshaper** для підготовки геоданих.
+
+## Запуск локально
+
+Потрібен Node.js 22+.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Відкрийте [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Скрипти `npm run geo:build`, `geo:neighbors` і `geo:frontline` перезбирають GeoJSON у `data/`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Структура
 
-## Learn More
+```
+app/          сторінки та API (app/api/sessions/[sid]/…)
+components/   мапа, шар ракет, вибір ракети, таблиця запусків
+hooks/        клієнтська сесія та SSE-підписка
+lib/          геометрія, правила польоту, регіони; lib/server/ працює лише на сервері
+data/         підготовлені GeoJSON
+scripts/      збирання геоданих
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Джерела даних
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Кордони областей: ДНВП «Картографія» / [OCHA HDX](https://data.humdata.org/dataset/cod-ab-ukr), via [geoBoundaries](https://www.geoboundaries.org) (CC BY 3.0 IGO)
+- Сусідні країни: [Natural Earth](https://www.naturalearthdata.com)
+- Лінія фронту: [DeepStateMap](https://deepstatemap.live)
