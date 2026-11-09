@@ -42,7 +42,7 @@ export function LaunchTable({
   const rows = [...launches].reverse();
 
   return (
-    <ul className="flex max-h-[70vh] flex-col gap-2 overflow-y-auto pr-1">
+    <ul className="flex max-h-[70vh] flex-col gap-2 overflow-y-auto pr-1 [scrollbar-color:var(--color-zinc-700)_transparent] [scrollbar-width:thin] hover:[scrollbar-color:var(--color-zinc-600)_transparent] lg:absolute lg:inset-0 lg:max-h-none">
       {rows.map(({ launch, progressKm }) => {
         const highlighted = launch.id === highlightedId;
         const percent =

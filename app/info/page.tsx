@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Про проєкт · Симулятор запусків",
 };
 
+const REPO_URL =
+  "https://github.com/VolodymyrChubenko/ukraine-launch-simulator";
+
 const Tech = ({ children }: { children: ReactNode }) => (
   <span className="font-medium text-zinc-100">{children}</span>
 );
@@ -15,61 +18,66 @@ const Code = ({ children }: { children: ReactNode }) => (
 
 const TECH_GROUPS: { title: string; items: ReactNode[] }[] = [
   {
-    title: "Фреймворк",
+    title: "Framework",
     items: [
       <>
-        <Tech>Next.js 16</Tech>: App Router, Turbopack, <Code>cacheComponents</Code>,
-        partial prefetching.
+        <Tech>Next.js 16</Tech>: App Router, Turbopack,{" "}
+        <Code>cacheComponents</Code>, partial prefetching.
       </>,
       <>
-        <Tech>React 19</Tech> і <Tech>TypeScript</Tech> з типізованими маршрутами (
-        <Code>RouteContext</Code>, <Code>LayoutProps</Code>).
+        <Tech>React 19</Tech> і <Tech>TypeScript</Tech> з типізованими
+        маршрутами (<Code>RouteContext</Code>, <Code>LayoutProps</Code>).
       </>,
     ],
   },
   {
-    title: "Картографія",
+    title: "Map",
     items: [
       <>
         <Tech>d3-geo</Tech>: проєкція Меркатора, вписана в ширину мапи.
       </>,
       <>
-        SVG-контури будуються на сервері (<Code>lib/geometry.ts</Code>), тому GeoJSON і
-        більша частина d3 не потрапляють у клієнтський бандл. Клієнт отримує лише
-        параметри проєкції й відтворює її (<Code>lib/projection.ts</Code>).
+        SVG-контури будуються на сервері (<Code>lib/geometry.ts</Code>), тому
+        GeoJSON і більша частина d3 не потрапляють у клієнтський бандл. Клієнт
+        отримує лише параметри проєкції й відтворює її (
+        <Code>lib/projection.ts</Code>).
       </>,
       <>
-        Траєкторія — дуга великого кола (<Code>geoInterpolate</Code>), відстань —{" "}
-        <Code>geoDistance</Code>, коло дальності — <Code>geoCircle</Code>, область під
-        точкою визначає <Code>geoContains</Code> на сервері.
+        Траєкторія — дуга великого кола (<Code>geoInterpolate</Code>), відстань
+        — <Code>geoDistance</Code>, коло дальності — <Code>geoCircle</Code>,
+        область під точкою визначає <Code>geoContains</Code> на сервері.
       </>,
     ],
   },
   {
-    title: "Дані",
+    title: "Data",
     items: [
       <>
-        Скрипти <Code>npm run geo:*</Code> на <Tech>mapshaper</Tech> готують GeoJSON
-        заздалегідь.
+        Скрипти <Code>npm run geo:*</Code> на <Tech>mapshaper</Tech> готують
+        GeoJSON заздалегідь.
       </>,
-      <>Кордони областей — geoBoundaries / OCHA HDX, спрощені до 600 м.</>,
+      <>Кордони областей — geoBoundaries / OCHA HDX (спрощені до 600 м.)</>,
       <>
-        Сусідні країни — Natural Earth; для Росії та Білорусі — з областями й
-        обласними центрами.
+        Сусідні країни — Natural Earth; для <small>р</small>осії та Білорусі — з
+        областями й обласними центрами.
       </>,
       <>Знімок лінії фронту з DeepStateMap, обрізаний по кордону України.</>,
+      <>
+        Рівні тривог — alerts.in.ua: сервер запитує їх з токеном і кешує на 30
+        секунд, браузер отримує лише рівні по областях.
+      </>,
     ],
   },
   {
-    title: "Сервер і API",
+    title: "Server & API",
     items: [
       <>
         <Tech>Route Handlers</Tech>: <Code>POST /launches</Code>,{" "}
         <Code>PUT /speed</Code>, <Code>PATCH /launches/[id]</Code>.
       </>,
       <>
-        Сервер — джерело правди: перевіряє дальність і район старту, рахує політ і
-        результат.
+        Сервер — джерело правди: перевіряє дальність і район старту, рахує політ
+        і результат.
       </>,
       <>
         Стан у пам&apos;яті, окремо для кожної вкладки: UUID у{" "}
@@ -78,29 +86,30 @@ const TECH_GROUPS: { title: string; items: ReactNode[] }[] = [
     ],
   },
   {
-    title: "Реальний час",
+    title: "Real Time",
     items: [
       <>
-        <Tech>Server-Sent Events</Tech>: сервер раз на секунду шле знімок стану через{" "}
-        <Code>ReadableStream</Code>, клієнт слухає <Code>EventSource</Code> з
-        автоматичним перепідключенням.
+        <Tech>Server-Sent Events</Tech>: сервер раз на секунду шле знімок стану
+        через <Code>ReadableStream</Code>, клієнт слухає{" "}
+        <Code>EventSource</Code> з автоматичним перепідключенням.
       </>,
       <>
-        Між знімками позиція екстраполюється в <Code>requestAnimationFrame</Code> за
-        тими самими правилами руху, що й на сервері (<Code>lib/launches.ts</Code>).
+        Між знімками позиція екстраполюється в{" "}
+        <Code>requestAnimationFrame</Code> за тими самими правилами руху, що й
+        на сервері (<Code>lib/launches.ts</Code>).
       </>,
     ],
   },
   {
-    title: "Інтерфейс",
+    title: "UI",
     items: [
       <>
         <Tech>Tailwind CSS 4</Tech>, шрифти <Tech>Geist</Tech> через{" "}
         <Code>next/font</Code> з кирилицею.
       </>,
       <>
-        Власні курсори (пускова установка, приціл), ракети повертаються за напрямком
-        польоту, таблиця запусків із підсвіткою на мапі.
+        Власні курсори (пускова установка, приціл), ракети повертаються за
+        напрямком польоту, таблиця запусків із підсвіткою на мапі.
       </>,
     ],
   },
@@ -110,26 +119,42 @@ export default function Info() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 pt-16 pb-10 text-zinc-300">
       <section className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">
-          Про проєкт
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">
+            Про проєкт
+          </h1>
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Код на GitHub"
+            title="Код на GitHub"
+            className="group rounded-md p-1.5 transition-colors hover:bg-zinc-800"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- static icon */}
+            <img
+              src="/gh.png"
+              alt=""
+              className="size-6 opacity-70 transition-opacity group-hover:opacity-100"
+            />
+          </a>
+        </div>
         <p>
-          Інтерактивний симулятор запусків ракет на мапі України. Оберіть точку старту
-          на підконтрольній території, тип ракети — «Нептун», «Фламінго», «Сапсан» чи
-          «Пекло» — і ціль у межах її дальності. Ракета летить найкоротшим шляхом по
-          поверхні Землі з реальною швидкістю, яку можна прискорити до ×120, а після
-          прильоту показується результат: «Ціль уражено» або «Ракету збито».
+          Інтерактивний симулятор запусків ракет на мапі України. Оберіть точку
+          старту на підконтрольній території, тип ракети і ціль у межах її
+          дальності. Ракета летить найкоротшим шляхом по поверхні Землі з
+          реальною швидкістю, яку можна прискорити до ×120, а після прильоту
+          показується результат: «Ціль уражено» або «Ракету збито».
         </p>
         <p>
-          На мапі — області України, сусідні країни та актуальна лінія фронту за даними
-          DeepStateMap. Правила спрощені: області з активними бойовими діями
-          враховуються цілком. Проєкт демонстраційний, характеристики ракет —
-          орієнтовні.
+          На мапі — області України, сусідні країни, актуальна лінія фронту за
+          даними DeepStateMap і поточні рівні тривог за даними alerts.in.ua.
+          Проєкт демонстраційний, характеристики ракет — орієнтовні.
         </p>
       </section>
 
       <section className="flex flex-col gap-6">
-        <h2 className="text-lg font-semibold text-zinc-100">Технології</h2>
+        <h2 className="text-lg font-semibold text-zinc-100">Stack</h2>
         {TECH_GROUPS.map(({ title, items }) => (
           <div key={title} className="flex flex-col gap-2">
             <h3 className="text-sm font-semibold tracking-wide text-zinc-400 uppercase">
@@ -172,6 +197,13 @@ export default function Info() {
           className="underline hover:text-zinc-300"
         >
           DeepStateMap
+        </a>
+        ,{" "}
+        <a
+          href="https://alerts.in.ua"
+          className="underline hover:text-zinc-300"
+        >
+          alerts.in.ua
         </a>
         .
       </footer>

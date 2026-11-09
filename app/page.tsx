@@ -42,7 +42,13 @@ export default function Home() {
         >
           DeepStateMap
         </a>
-        , станом на {frontlineDate}
+        , станом на {frontlineDate} · Тривоги:{" "}
+        <a
+          href="https://alerts.in.ua"
+          className="underline hover:text-zinc-300"
+        >
+          alerts.in.ua
+        </a>
       </footer>
     </main>
   );

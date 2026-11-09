@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { GeoProjection } from "d3-geo";
+import { ALERT_FILL, type AlertLevels } from "@/lib/alerts";
 import { FRONTLINE_FILL, FRONTLINE_LAYERS } from "@/lib/frontline";
 import type { UkraineMapData } from "@/lib/geometry";
 import { projectionFromParams, type LonLat } from "@/lib/projection";
@@ -21,6 +22,7 @@ export type MapClick = MapPoint & { regionId?: RegionId };
 
 type Props = {
   map: UkraineMapData;
+  alertLevels?: AlertLevels;
   /** Any click on the map, including the sea and other countries. */
   onMapClick?: (click: MapClick) => void;
   onMapMove?: (point: MapPoint) => void;
@@ -46,6 +48,7 @@ function toMapPoint(
 
 export function UkraineMap({
   map,
+  alertLevels,
   onMapClick,
   onMapMove,
   onContextMenu,
@@ -93,7 +96,7 @@ export function UkraineMap({
         onMouseMove={onMapMove ? handleMove : undefined}
         onContextMenu={handleContextMenu}
       >
-        <MapBase map={map} />
+        <MapBase map={map} alertLevels={alertLevels} />
         {children}
       </svg>
     </MapProjectionContext>
@@ -101,7 +104,10 @@ export function UkraineMap({
 }
 
 /** Static part of the map: memoised so 60 fps overlays don't re-render it. */
-const MapBase = memo(function MapBase({ map }: Pick<Props, "map">) {
+const MapBase = memo(function MapBase({
+  map,
+  alertLevels,
+}: Pick<Props, "map" | "alertLevels">) {
   return (
     <>
       <g aria-hidden className="fill-[#1c2027]">
@@ -123,17 +129,21 @@ const MapBase = memo(function MapBase({ map }: Pick<Props, "map">) {
         ))}
       </g>
 
-      {map.regions.map(({ id, name, path }) => (
-        <path
-          key={id}
-          d={path}
-          data-region={id}
-          aria-label={name}
-          className="fill-[#3b4049] stroke-[#0f1115] stroke-1"
-        >
-          <title>{name}</title>
-        </path>
-      ))}
+      {map.regions.map(({ id, name, path }) => {
+        const level = alertLevels?.[id];
+        return (
+          <path
+            key={id}
+            d={path}
+            data-region={id}
+            aria-label={name}
+            className="fill-[#3b4049] stroke-[#0f1115] stroke-1"
+            style={level && { fill: ALERT_FILL[level] }}
+          >
+            <title>{name}</title>
+          </path>
+        );
+      })}
 
       {/* Clicks pass through to the regions: they decide where a launch starts. */}
       <g aria-hidden className="pointer-events-none">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAlertLevels } from "@/hooks/useAlertLevels";
 import { useAnimationFrame } from "@/hooks/useAnimationFrame";
 import { progressAt, useMissileSession } from "@/hooks/useMissileSession";
 import { useSessionId } from "@/hooks/useSessionId";
@@ -9,6 +10,8 @@ import type { UkraineMapData } from "@/lib/geometry";
 import { SPEEDS, distanceKm, type LaunchErrorCode } from "@/lib/launches";
 import { MISSILES, type MissileId } from "@/lib/missiles";
 import { startRestriction } from "@/lib/regions";
+import { AlertLegend } from "./AlertLegend";
+import { DonateBadge } from "./DonateBadge";
 import { LaunchTable } from "./LaunchTable";
 import { MissileLayer, type DraftLaunch } from "./MissileLayer";
 import { MissilePicker } from "./MissilePicker";
@@ -46,6 +49,7 @@ export function MissileSimulator({ map }: { map: UkraineMapData }) {
   const sid = useSessionId();
   const { speed, launches, connected, launch, setSpeed, dismissLabel } =
     useMissileSession(sid);
+  const alerts = useAlertLevels();
 
   const [mode, setMode] = useState<Mode>({ stage: "idle" });
   const [aimInRange, setAimInRange] = useState(true);
@@ -164,17 +168,135 @@ export function MissileSimulator({ map }: { map: UkraineMapData }) {
   const highlightedId = hoveredId ?? selectedId;
 
   return (
-    <div className="grid w-full gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-      <aside className="order-2 flex flex-col gap-3 lg:order-1">
-        <h2 className="flex items-center gap-2 text-sm font-medium text-zinc-300">
-          Запуски
-          <span
-            className={`size-2 rounded-full ${connected ? "bg-emerald-400" : "bg-zinc-600"}`}
-            title={
-              connected ? "Зʼєднано з сервером" : "Немає зʼєднання з сервером"
+    // One grid on lg: the launch list shares a row with the map, so it is
+    // exactly as tall as the map (the list itself is absolutely positioned).
+    <div className="grid w-full gap-x-6 gap-y-4 lg:grid-cols-[20rem_minmax(0,1fr)]">
+      <div className="flex flex-col gap-2 lg:col-start-2 lg:row-start-1">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              setMode(
+                mode.stage === "idle" ? { stage: "armed" } : { stage: "idle" },
+              )
             }
+            aria-pressed={mode.stage !== "idle"}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition ${
+              mode.stage === "idle"
+                ? "border-sky-500 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
+                : "border-zinc-500 bg-zinc-800 text-zinc-100 hover:bg-zinc-700"
+            }`}
+          >
+            {mode.stage === "idle" ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element -- tiny pixel-art icon */}
+                <img
+                  src="/missle.png"
+                  alt=""
+                  className="-my-1 size-[22.5px] shrink-0"
+                />
+                Запустити ракету
+              </>
+            ) : (
+              "Завершити запуски"
+            )}
+          </button>
+
+          <div className="ml-auto flex shrink-0 items-center gap-2 max-[427px]:gap-0">
+            <span aria-hidden title="Прискорення часу">
+              {/* eslint-disable-next-line @next/next/no-img-element -- tiny pixel-art icon */}
+              <img src="/hourglass.png" alt="" className="size-[22.5px]" />
+            </span>
+            <div
+              role="group"
+              aria-label="Прискорення часу"
+              className="flex overflow-hidden rounded-md border border-zinc-700 text-sm"
+            >
+              {SPEEDS.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => void setSpeed(value)}
+                  aria-pressed={speed === value}
+                  className={`px-2.5 py-1 tabular-nums transition ${
+                    speed === value
+                      ? "bg-zinc-200 text-zinc-900"
+                      : "text-zinc-300 hover:bg-zinc-800"
+                  }`}
+                >
+                  ×{value}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {instruction && (
+          <span className="text-sm text-zinc-400">
+            {instruction}
+            <span className="text-zinc-600"> · Esc — скасувати</span>
+          </span>
+        )}
+      </div>
+
+      <div className="relative lg:col-start-2 lg:row-start-2">
+        <UkraineMap
+          map={map}
+          alertLevels={alerts.status === "ready" ? alerts.levels : undefined}
+          cursor={cursor}
+          onMapClick={handleMapClick}
+          onMapMove={mode.stage === "aim" ? handleAimMove : undefined}
+          onContextMenu={
+            mode.stage === "start" || mode.stage === "aim"
+              ? () => setMode({ stage: "armed" })
+              : undefined
+          }
+        >
+          <MissileLayer
+            launches={live}
+            draft={draft}
+            highlightedId={highlightedId}
+            interactive={mode.stage === "idle"}
+            onSelect={toggleSelected}
+            onDismiss={dismissLabel}
           />
-        </h2>
+        </UkraineMap>
+
+        <DonateBadge disabled={mode.stage !== "idle"} />
+
+        {mode.stage === "start" && (
+          <MissilePicker {...toPercent(mode.from)} onPick={pickMissile} />
+        )}
+
+        {hint && (
+          <p
+            key={hint.id}
+            role="status"
+            className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[calc(100%+12px)] rounded-md bg-zinc-800 px-2 py-1 text-xs whitespace-nowrap text-zinc-100 shadow-lg"
+            style={{ left: `${hint.left}%`, top: `${hint.top}%` }}
+          >
+            {hint.text}
+          </p>
+        )}
+      </div>
+
+      <div className="lg:col-start-2 lg:row-start-3">
+        <AlertLegend alerts={alerts} />
+      </div>
+
+      <h2 className="mt-2 flex items-center gap-2 text-sm font-medium text-zinc-300 lg:col-start-1 lg:row-start-1 lg:mt-0 lg:self-end">
+        Запуски
+        <span
+          className={`size-2 rounded-full ${connected ? "bg-emerald-400" : "bg-zinc-600"}`}
+          title={
+            connected ? "Зʼєднано з сервером" : "Немає зʼєднання з сервером"
+          }
+        />
+      </h2>
+      <aside
+        aria-label="Запуски"
+        className="lg:relative lg:col-start-1 lg:row-start-2"
+      >
         <LaunchTable
           launches={live}
           highlightedId={highlightedId}
@@ -182,116 +304,6 @@ export function MissileSimulator({ map }: { map: UkraineMapData }) {
           onHover={setHoveredId}
         />
       </aside>
-
-      <section className="order-1 flex flex-col gap-4 lg:order-2">
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                setMode(
-                  mode.stage === "idle"
-                    ? { stage: "armed" }
-                    : { stage: "idle" },
-                )
-              }
-              aria-pressed={mode.stage !== "idle"}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition ${
-                mode.stage === "idle"
-                  ? "border-sky-500 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
-                  : "border-zinc-500 bg-zinc-800 text-zinc-100 hover:bg-zinc-700"
-              }`}
-            >
-              {mode.stage === "idle" ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- tiny pixel-art icon */}
-                  <img
-                    src="/missle.png"
-                    alt=""
-                    className="-my-1 size-[22.5px] shrink-0"
-                  />
-                  Запустити ракету
-                </>
-              ) : (
-                "Завершити запуски"
-              )}
-            </button>
-
-            <div className="ml-auto flex shrink-0 items-center gap-2 max-[427px]:gap-0">
-              <span aria-hidden title="Прискорення часу">
-                {/* eslint-disable-next-line @next/next/no-img-element -- tiny pixel-art icon */}
-                <img src="/hourglass.png" alt="" className="size-[22.5px]" />
-              </span>
-              <div
-                role="group"
-                aria-label="Прискорення часу"
-                className="flex overflow-hidden rounded-md border border-zinc-700 text-sm"
-              >
-                {SPEEDS.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => void setSpeed(value)}
-                    aria-pressed={speed === value}
-                    className={`px-2.5 py-1 tabular-nums transition ${
-                      speed === value
-                        ? "bg-zinc-200 text-zinc-900"
-                        : "text-zinc-300 hover:bg-zinc-800"
-                    }`}
-                  >
-                    ×{value}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {instruction && (
-            <span className="text-sm text-zinc-400">
-              {instruction}
-              <span className="text-zinc-600"> · Esc — скасувати</span>
-            </span>
-          )}
-        </div>
-
-        <div className="relative">
-          <UkraineMap
-            map={map}
-            cursor={cursor}
-            onMapClick={handleMapClick}
-            onMapMove={mode.stage === "aim" ? handleAimMove : undefined}
-            onContextMenu={
-              mode.stage === "start" || mode.stage === "aim"
-                ? () => setMode({ stage: "armed" })
-                : undefined
-            }
-          >
-            <MissileLayer
-              launches={live}
-              draft={draft}
-              highlightedId={highlightedId}
-              interactive={mode.stage === "idle"}
-              onSelect={toggleSelected}
-              onDismiss={dismissLabel}
-            />
-          </UkraineMap>
-
-          {mode.stage === "start" && (
-            <MissilePicker {...toPercent(mode.from)} onPick={pickMissile} />
-          )}
-
-          {hint && (
-            <p
-              key={hint.id}
-              role="status"
-              className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[calc(100%+12px)] rounded-md bg-zinc-800 px-2 py-1 text-xs whitespace-nowrap text-zinc-100 shadow-lg"
-              style={{ left: `${hint.left}%`, top: `${hint.top}%` }}
-            >
-              {hint.text}
-            </p>
-          )}
-        </div>
-      </section>
     </div>
   );
 }
