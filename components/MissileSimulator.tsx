@@ -158,7 +158,7 @@ export function MissileSimulator({ map }: { map: UkraineMapData }) {
 
   const instruction = {
     idle: null,
-    armed: "Оберіть точку запуску в Україні поза зоною бойових дій",
+    armed: "Оберіть старт поза зоною бойових дій",
     start: "Оберіть ракету",
     aim:
       mode.stage === "aim" &&
@@ -231,12 +231,22 @@ export function MissileSimulator({ map }: { map: UkraineMapData }) {
           </div>
         </div>
 
-        {instruction && (
-          <span className="text-sm text-zinc-400">
-            {instruction}
-            <span className="text-zinc-600"> · Esc — скасувати</span>
-          </span>
-        )}
+        {/* Always rendered, one line tall: the map must not shift between steps. */}
+        <span
+          aria-live="polite"
+          className="min-h-5 truncate text-sm text-zinc-400"
+        >
+          {instruction && (
+            <>
+              {instruction}
+              {/* No Esc key on touch screens; «Завершити запуски» cancels there. */}
+              <span className="text-zinc-600 pointer-coarse:hidden">
+                {" "}
+                · Esc — скасувати
+              </span>
+            </>
+          )}
+        </span>
       </div>
 
       <div className="relative lg:col-start-2 lg:row-start-2">
